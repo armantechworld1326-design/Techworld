@@ -1581,20 +1581,16 @@
                     sessionStorage.setItem('pendingOrder', JSON.stringify(currentOrder));
                     startPollingOrderStatus(orderId, currentOrder);
 
-                    // ========== OPEN PAYMENT PAGE IN CHROME ==========
-                    // Instead of window.open, use Chrome Intent
+                    // ========== UPDATED: Open payment in Chrome if in WebView ==========
                     const paymentUrl = data.result.payment_url;
-
-                    // If in WebView, force Chrome
                     if (isInWebView()) {
                         openPaymentInChrome(paymentUrl);
-                        showToast("Payment page opening in Chrome...");
+                        showToast("Opening payment page in Chrome...");
                     } else {
-                        // For regular browsers, open in new tab
                         window.open(paymentUrl, '_blank');
                         showToast("Payment page opened in new tab. Complete payment there.");
                     }
-                    // ================================================
+                    // ========== END UPDATE ==========
 
                     rechargeBtn.disabled = false;
                     rechargeBtn.innerHTML = "🚀 Proceed to Pay";
