@@ -192,9 +192,11 @@
             0% {
                 transform: scale(1);
             }
+
             50% {
                 transform: scale(1.08);
             }
+
             100% {
                 transform: scale(1.03);
             }
@@ -888,7 +890,8 @@
                     Imo</button>
             </div>
         </div>
-        <footer style="font-size:0.6rem; text-align:center; margin-top:1rem;">✌️ it takes just a minute in diamond delivery </footer>
+        <footer style="font-size:0.6rem; text-align:center; margin-top:1rem;">✌️ it takes just a minute in diamond
+            delivery </footer>
 
         <!-- ===== NEW SEARCH HISTORY SECTION ===== -->
         <div class="history-section">
@@ -944,29 +947,31 @@
 
     <!-- Tutorial Modal -->
     <!-- Tutorial Modal -->
-<div id="tutorialModal" class="modal-overlay">
-    <div class="modal-content">
-        <h3>📱 How to find your IMO Profile ID?</h3>
-        
-        <!-- GIF instead of YouTube -->
-        <div style="margin:1rem 0; border-radius:1rem; overflow:hidden; background:#f0f0f0;">
-            <img src="imo-tutorial.gif" alt="How to find IMO Profile ID" style="width:100%; height:auto; display:block;">
+    <div id="tutorialModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>📱 How to find your IMO Profile ID?</h3>
+
+            <!-- GIF instead of YouTube -->
+            <div style="margin:1rem 0; border-radius:1rem; overflow:hidden; background:#f0f0f0;">
+                <img src="imo-tutorial.gif" alt="How to find IMO Profile ID"
+                    style="width:100%; height:auto; display:block;">
+            </div>
+
+            <!-- Optional: Text instructions -->
+            <div
+                style="background:#f8fafc; border-radius:0.8rem; padding:0.8rem; text-align:left; font-size:0.85rem; margin-bottom:0.5rem;">
+                <p><strong>📝 How to find your IMO ID:</strong></p>
+                <ol style="padding-left:1.2rem; margin:0.3rem 0;">
+                    <li>Open the IMO app</li>
+                    <li>Tap on your profile picture</li>
+                    <li>Your Profile ID is shown below your name</li>
+                    <li>Copy the numbers and paste in the field above</li>
+                </ol>
+            </div>
+
+            <button class="btn-primary" onclick="closeTutorial()" style="margin-top:0.5rem;">Got it! ✨</button>
         </div>
-        
-        <!-- Optional: Text instructions -->
-        <div style="background:#f8fafc; border-radius:0.8rem; padding:0.8rem; text-align:left; font-size:0.85rem; margin-bottom:0.5rem;">
-            <p><strong>📝 How to find your IMO ID:</strong></p>
-            <ol style="padding-left:1.2rem; margin:0.3rem 0;">
-                <li>Open the IMO app</li>
-                <li>Tap on your profile picture</li>
-                <li>Your Profile ID is shown below your name</li>
-                <li>Copy the numbers and paste in the field above</li>
-            </ol>
-        </div>
-        
-        <button class="btn-primary" onclick="closeTutorial()" style="margin-top:0.5rem;">Got it! ✨</button>
     </div>
-</div>
 
     <!-- Success Overlay -->
     <div id="successOverlay" class="success-overlay">
@@ -1052,6 +1057,57 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
+        // ========== FORCE CHROME FOR PAYMENT ==========
+        function isInWebView() {
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            // Check for WebView indicators
+            return /wv/i.test(ua) || /WebView/i.test(ua) ||
+                // Check for imo, WhatsApp, Telegram, Facebook in-app browsers
+                /IMO/i.test(ua) || /WhatsApp/i.test(ua) || /FBAV/i.test(ua) ||
+                /Instagram/i.test(ua) || /Telegram/i.test(ua) || /Line/i.test(ua);
+        }
+
+        function openPaymentInChrome(paymentUrl) {
+            // Method 1: Android Intent (works on most Android devices)
+            const chromeIntent = `intent://${paymentUrl.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end;`;
+
+            // Method 2: Fallback for Chrome Custom Tabs
+            const chromeCustomTab = `https://chrome.google.com/`;
+
+            // Method 3: Try opening in Chrome via intent
+            try {
+                window.location.href = chromeIntent;
+            } catch (e) {
+                // Fallback: Open in new window (may still open in WebView)
+                window.open(paymentUrl, '_blank');
+            }
+
+            // Show a toast/instruction
+            showToast("Opening payment page in Chrome...");
+        }
+
+        // ========== INTERCEPT ALL PAYMENT CLICKS ==========
+        document.addEventListener('click', function (e) {
+            // Check if clicked element is a payment button or link
+            const target = e.target.closest('a[href*="pay0.shop"], button[data-payment="true"]');
+            if (target) {
+                const href = target.href || target.dataset.paymentUrl;
+                if (href && href.includes('pay0.shop')) {
+                    e.preventDefault();
+                    // Force open in Chrome
+                    openPaymentInChrome(href);
+                }
+            }
+        });
+
+        // Also handle any dynamically created payment links
+        function handlePaymentLink(url) {
+            if (isInWebView()) {
+                openPaymentInChrome(url);
+            } else {
+                window.open(url, '_blank');
+            }
+        }
 
         // ========== PAY0 CONFIGURATION ==========
         const PAY0_API_URL = '/api/create-order';
@@ -1524,8 +1580,22 @@
                 if (data.status === true && data.result && data.result.payment_url) {
                     sessionStorage.setItem('pendingOrder', JSON.stringify(currentOrder));
                     startPollingOrderStatus(orderId, currentOrder);
-                    window.open(data.result.payment_url, '_blank');
-                    showToast("Payment page opened in new tab. Complete payment there.");
+
+                    // ========== OPEN PAYMENT PAGE IN CHROME ==========
+                    // Instead of window.open, use Chrome Intent
+                    const paymentUrl = data.result.payment_url;
+
+                    // If in WebView, force Chrome
+                    if (isInWebView()) {
+                        openPaymentInChrome(paymentUrl);
+                        showToast("Payment page opening in Chrome...");
+                    } else {
+                        // For regular browsers, open in new tab
+                        window.open(paymentUrl, '_blank');
+                        showToast("Payment page opened in new tab. Complete payment there.");
+                    }
+                    // ================================================
+
                     rechargeBtn.disabled = false;
                     rechargeBtn.innerHTML = "🚀 Proceed to Pay";
                 }
@@ -1695,7 +1765,7 @@
                     const data = snapshot.val();
                     if (!data) {
                         contentDiv.innerHTML =
-                        `<div class="history-empty">😕 No purchases found for IMO ID: ${imoId}</div>`;
+                            `<div class="history-empty">😕 No purchases found for IMO ID: ${imoId}</div>`;
                         return;
                     }
 
@@ -1779,7 +1849,7 @@
 
         // Search history event listeners
         document.getElementById('historySearchBtn').addEventListener('click', searchPurchaseHistory);
-        document.getElementById('historySearchInput').addEventListener('keypress', function(e) {
+        document.getElementById('historySearchInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 searchPurchaseHistory();
             }
@@ -1800,7 +1870,7 @@
             manualQtyInput.value = newVal;
             updateFromManualInput();
         });
-        document.getElementById('imoId').addEventListener('input', function(e) {
+        document.getElementById('imoId').addEventListener('input', function (e) {
             this.value = this.value.replace(/[^0-9]/g, '');
         });
         document.getElementById('rechargeBtn').addEventListener('click', proceedToPayment);
@@ -1855,13 +1925,13 @@
                 const pendingData = sessionStorage.getItem('pendingOrderData') || localStorage.getItem(
                     'pendingOrderDataBackup');
                 if (pendingData && sessionStorage.getItem('upiStartTime') && Date.now() - parseInt(sessionStorage
-                        .getItem('upiStartTime')) > 2000) {
+                    .getItem('upiStartTime')) > 2000) {
                     paymentInitiated = true;
                     checkReturnAndRedirectToWhatsApp();
                 }
             }
         });
-        document.getElementById('successOverlay').addEventListener('click', function(e) {
+        document.getElementById('successOverlay').addEventListener('click', function (e) {
             if (e.target === this) this.classList.remove('active');
         });
 
