@@ -1068,22 +1068,26 @@
         }
 
         function openPaymentInChrome(paymentUrl) {
-            // Method 1: Android Intent (works on most Android devices)
-            const chromeIntent = `intent://${paymentUrl.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end;`;
+            // Create a hidden anchor element
+            const link = document.createElement('a');
+            link.href = paymentUrl;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.style.position = 'fixed';
+            link.style.left = '-9999px';
+            link.style.top = '-9999px';
+            document.body.appendChild(link);
 
-            // Method 2: Fallback for Chrome Custom Tabs
-            const chromeCustomTab = `https://chrome.google.com/`;
+            // Programmatically click - simulates user click, reducing popup
+            link.click();
 
-            // Method 3: Try opening in Chrome via intent
-            try {
-                window.location.href = chromeIntent;
-            } catch (e) {
-                // Fallback: Open in new window (may still open in WebView)
-                window.open(paymentUrl, '_blank');
-            }
+            // Clean up after click
+            setTimeout(() => {
+                document.body.removeChild(link);
+            }, 100);
 
-            // Show a toast/instruction
-            showToast("Opening payment page in Chrome...");
+            // Show toast
+            showToast("Opening payment page...");
         }
 
         // ========== INTERCEPT ALL PAYMENT CLICKS ==========
