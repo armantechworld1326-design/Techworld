@@ -73,9 +73,32 @@
         /* ===== BEAUTIFIED DIAMOND PACK GRID ===== */
         .diamond-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 110px);
+            gap: 10px;
+            justify-content: center;
+            margin: 0.4rem 0;
+            /* Enclose all boxes in a rectangle */
+            border: 2px solid #d1d5db;
+            border-radius: 1.6rem;
+            padding: 2px;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .diamond-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(130px, 180px));
+            /* ← wider columns */
             gap: 14px;
-            margin: 1rem 0;
+            margin: 0 auto;
+            border: 1px solid #d1d5db;
+            border-radius: 1.2rem;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(4px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+            justify-content: center;
         }
 
         .diamond-option {
@@ -84,7 +107,7 @@
             padding: 0.9rem 0.3rem;
             text-align: center;
             cursor: pointer;
-            border: none;
+            border: 2px solid transparent;
             transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
             overflow: hidden;
@@ -119,6 +142,7 @@
             background: linear-gradient(145deg, #f3e8ff, #e9d5ff);
             transform: translateY(-4px) scale(1.03);
             box-shadow: 0 8px 30px rgba(123, 45, 142, 0.3);
+            border-color: #7b2d8e;
         }
 
         .diamond-option.selected::before {
@@ -137,7 +161,7 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            font-size: 1.3rem;
+            font-size: 0.8rem;
             filter: drop-shadow(0 2px 8px rgba(123, 45, 142, 0.2));
             transition: transform 0.3s ease;
         }
@@ -220,6 +244,32 @@
             pointer-events: none;
         }
 
+        .diamond-option:hover::after {
+            opacity: 1;
+        }
+
+        /* ===== TICK MARK FOR SELECTED PACK ===== */
+        .diamond-option.selected::after {
+            content: "✔";
+            position: absolute;
+            top: 4px;
+            right: 8px;
+            font-size: 18px;
+            color: #10b981;
+            font-weight: bold;
+            opacity: 1;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Ensure the shimmer effect doesn't cover the tick */
         .diamond-option:hover::after {
             opacity: 1;
         }
@@ -451,7 +501,7 @@
             background: #eef2ff;
             border-radius: 2rem;
             padding: 0.7rem;
-            margin: 0.5rem 0;
+            margin: 0.1rem 0;
             display: flex;
             justify-content: space-between;
             font-weight: bold;
@@ -818,19 +868,8 @@
         @media (max-width: 500px) {
             .diamond-grid {
                 grid-template-columns: repeat(3, 1fr);
-            }
-
-            .glass-card {
-                padding: 1.2rem;
-            }
-
-            .stepper-btn {
-                width: 38px;
-                height: 38px;
-            }
-
-            .manual-diamond-input {
-                width: 90px;
+                gap: 10px;
+                padding: 12px;
             }
         }
     </style>
@@ -1057,50 +1096,36 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
+
         // ========== FORCE CHROME FOR PAYMENT ==========
         function isInWebView() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
-            // Check for WebView indicators
             return /wv/i.test(ua) || /WebView/i.test(ua) ||
-                // Check for imo, WhatsApp, Telegram, Facebook in-app browsers
                 /IMO/i.test(ua) || /WhatsApp/i.test(ua) || /FBAV/i.test(ua) ||
                 /Instagram/i.test(ua) || /Telegram/i.test(ua) || /Line/i.test(ua);
         }
 
         function openPaymentInChrome(paymentUrl) {
-    // Method 1: Android Intent (works on most Android devices)
-    const chromeIntent = `intent://${paymentUrl.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end;`;
-    
-    // Method 2: Fallback for Chrome Custom Tabs
-    const chromeCustomTab = `https://chrome.google.com/`;
-    
-    // Method 3: Try opening in Chrome via intent
-    try {
-        window.location.href = chromeIntent;
-    } catch(e) {
-        // Fallback: Open in new window (may still open in WebView)
-        window.open(paymentUrl, '_blank');
-    }
-    
-    // Show a toast/instruction
-    showToast("Opening payment page in Chrome...");
-}
+            const chromeIntent = `intent://${paymentUrl.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end;`;
+            try {
+                window.location.href = chromeIntent;
+            } catch (e) {
+                window.open(paymentUrl, '_blank');
+            }
+            showToast("Opening payment page in Chrome...");
+        }
 
-        // ========== INTERCEPT ALL PAYMENT CLICKS ==========
         document.addEventListener('click', function (e) {
-            // Check if clicked element is a payment button or link
             const target = e.target.closest('a[href*="pay0.shop"], button[data-payment="true"]');
             if (target) {
                 const href = target.href || target.dataset.paymentUrl;
                 if (href && href.includes('pay0.shop')) {
                     e.preventDefault();
-                    // Force open in Chrome
                     openPaymentInChrome(href);
                 }
             }
         });
 
-        // Also handle any dynamically created payment links
         function handlePaymentLink(url) {
             if (isInWebView()) {
                 openPaymentInChrome(url);
@@ -1120,17 +1145,32 @@
         const WHATSAPP_NUMBER = "916203240682";
         const MIN_DIAMONDS = 10;
 
-        // Define pack quantities
-        const packQuantities = [10, 50, 100, 200, 500, 1000, 2000, 5000];
+        // ========== UPDATED PACK QUANTITIES (12 packs = 3 rows of 4) ==========
+        const packQuantities = [10, 50, 100, 200, 300, 500, 600, 700, 1000, 2000, 3000, 5000];
 
-        // These will be loaded from Firebase
+        // ========== DEFAULT RATES MATCHING THE SCREENSHOT ==========
+        const defaultRates = {
+            10: 3.0,
+            50: 1.8,
+            100: 1.77,
+            200: 1.775,
+            300: 1.78,
+            500: 1.77,
+            600: 1.77,
+            700: 1.77,
+            1000: 1.77,
+            2000: 1.77,
+            3000: 1.76,
+            5000: 1.76
+        };
+
         let perDiamondRates = {};
         let creditPacks = [];
         let tickerMessages = ["✨ fast and easy • Secure Payment", "💎 Best Diamond Rates", "⚡ Instant Recharge"];
         let tickerMessageString = "✨ fast and easy • Secure Payment | 💎 Best Diamond Rates | ⚡ Instant Recharge";
 
         let currentStepValue = 10;
-        let currentQty = 100;
+        let currentQty = 10; // Default selected pack
         let currentAmount = 0;
         let currentOrder = null;
         let paymentInitiated = false;
@@ -1139,11 +1179,10 @@
         let orders = [];
         let currentAdmin = null;
         let lockedPackRate = 1.76;
-        let lockedPackQty = 100;
+        let lockedPackQty = 10;
 
         // ========== LOAD PRICES AND TICKER FROM FIREBASE ==========
         function loadPricesAndTickerFromFirebase() {
-            // Load diamond rates
             const ratesRef = db.ref('perDiamondRates');
             ratesRef.on('value', (snapshot) => {
                 const data = snapshot.val();
@@ -1156,8 +1195,7 @@
                                 changed = true;
                             }
                         } else if (!perDiamondRates[qty]) {
-                            // Set default if not exists
-                            perDiamondRates[qty] = qty === 10 ? 3.0 : qty === 50 ? 1.8 : 1.76;
+                            perDiamondRates[qty] = defaultRates[qty] || 1.76;
                         }
                     }
                     if (changed) {
@@ -1166,28 +1204,24 @@
                         updateUI();
                         showToast("💰 Prices updated from server!");
                     } else if (Object.keys(perDiamondRates).length === 0) {
-                        // First load - set defaults
                         for (let qty of packQuantities) {
-                            perDiamondRates[qty] = qty === 10 ? 3.0 : qty === 50 ? 1.8 : 1.76;
+                            perDiamondRates[qty] = defaultRates[qty] || 1.76;
                         }
                         generateCreditPacks();
                         buildGrid();
                         updateUI();
                     }
                 } else {
-                    // Set default rates if nothing in Firebase
                     for (let qty of packQuantities) {
-                        perDiamondRates[qty] = qty === 10 ? 3.0 : qty === 50 ? 1.8 : 1.76;
+                        perDiamondRates[qty] = defaultRates[qty] || 1.76;
                     }
                     generateCreditPacks();
                     buildGrid();
                     updateUI();
-                    // Save defaults to Firebase for future use
                     db.ref('perDiamondRates').set(perDiamondRates);
                 }
             });
 
-            // Load ticker messages
             const tickerRef = db.ref('tickerMessages');
             tickerRef.on('value', (snapshot) => {
                 const data = snapshot.val();
@@ -1196,20 +1230,18 @@
                     tickerMessageString = tickerMessages.join(' | ');
                     updateTickerDisplay();
                 } else if (data && typeof data === 'string') {
-                    // Handle string format
                     tickerMessageString = data;
                     tickerMessages = data.split('|').map(s => s.trim());
                     updateTickerDisplay();
                 } else {
-                    // Default ticker
                     tickerMessages = ["✨ Fast Delivery • Secure Payment", "💎 Best Diamond Rates", "⚡ Instant Recharge"];
                     tickerMessageString = tickerMessages.join(' | ');
                     updateTickerDisplay();
-                    // Save default to Firebase
                     db.ref('tickerMessages').set({ messages: tickerMessages });
                 }
             });
         }
+
         // ========== MAINTENANCE MODE LISTENER ==========
         function applyMaintenanceMode(isMaintenance) {
             const maintenanceAlert = document.getElementById('maintenanceAlert');
@@ -1220,37 +1252,26 @@
             const incrementBtn = document.getElementById('incrementBtn');
 
             if (isMaintenance) {
-                // Show maintenance alert
                 if (maintenanceAlert) {
                     maintenanceAlert.style.display = 'block';
                     maintenanceAlert.innerHTML = '⚠️ The Website is currently under maintenance. Please try again later. ⚠️';
                 }
-
-                // Disable Proceed to Pay button
                 if (rechargeBtn) {
                     rechargeBtn.disabled = true;
                     rechargeBtn.style.opacity = '0.6';
                     rechargeBtn.style.cursor = 'not-allowed';
                 }
-
-                // Disable diamond pack selection
                 diamondOptions.forEach(el => {
                     el.style.pointerEvents = 'none';
                     el.style.opacity = '0.5';
                 });
-
-                // Disable manual quantity controls
                 if (manualQty) manualQty.disabled = true;
                 if (decrementBtn) decrementBtn.disabled = true;
                 if (incrementBtn) incrementBtn.disabled = true;
-
             } else {
-                // Hide maintenance alert
                 if (maintenanceAlert) {
                     maintenanceAlert.style.display = 'none';
                 }
-
-                // Enable Proceed to Pay button (if minimum diamonds condition is met)
                 if (rechargeBtn) {
                     const minDiamonds = 10;
                     const currentQty = parseInt(document.getElementById('manualQty')?.value || 100);
@@ -1260,35 +1281,27 @@
                         rechargeBtn.style.cursor = 'pointer';
                     }
                 }
-
-                // Enable diamond pack selection
                 diamondOptions.forEach(el => {
                     el.style.pointerEvents = 'auto';
                     el.style.opacity = '1';
                 });
-
-                // Enable manual quantity controls
                 if (manualQty) manualQty.disabled = false;
                 if (decrementBtn) decrementBtn.disabled = false;
                 if (incrementBtn) incrementBtn.disabled = false;
             }
         }
 
-        // Listen to maintenance mode changes
         db.ref('maintenanceMode').on('value', (snapshot) => {
             const isMaintenance = snapshot.val() === true;
             console.log('[MAINTENANCE] Mode:', isMaintenance ? 'ON' : 'OFF');
             applyMaintenanceMode(isMaintenance);
         });
 
-        // Also check immediately on page load (as backup)
         db.ref('maintenanceMode').get().then((snapshot) => {
             const isMaintenance = snapshot.val() === true;
             console.log('[MAINTENANCE] Initial load - Mode:', isMaintenance ? 'ON' : 'OFF');
             applyMaintenanceMode(isMaintenance);
         });
-
-
 
         function updateTickerDisplay() {
             const tickerElement = document.getElementById('tickerText');
@@ -1300,10 +1313,9 @@
         function generateCreditPacks() {
             creditPacks = [];
             for (let qty of packQuantities) {
-                let rate = perDiamondRates[qty] || (qty === 10 ? 3.0 : qty === 50 ? 1.8 : 1.76);
+                let rate = perDiamondRates[qty] || defaultRates[qty] || 1.76;
                 creditPacks.push({ qty: qty, price: Math.round(rate * qty) });
             }
-            // Update lockedPackRate based on current quantity
             lockedPackRate = getPackRate(lockedPackQty);
         }
 
@@ -1325,7 +1337,7 @@
         }
 
         function getPackRate(qty) {
-            return perDiamondRates[qty] || (qty === 10 ? 3.0 : qty === 50 ? 1.8 : 1.76);
+            return perDiamondRates[qty] || defaultRates[qty] || 1.76;
         }
 
         // ========== POLLING FUNCTIONALITY ==========
@@ -1502,14 +1514,21 @@
                     currentQty = pack.qty;
                     lockedPackRate = getPackRate(pack.qty);
                     lockedPackQty = pack.qty;
-                    if (pack.qty === 10) currentStepValue = 10;
-                    else if (pack.qty === 50) currentStepValue = 50;
-                    else if (pack.qty === 100) currentStepValue = 100;
-                    else if (pack.qty === 200) currentStepValue = 200;
-                    else if (pack.qty === 500) currentStepValue = 500;
-                    else if (pack.qty === 1000) currentStepValue = 1000;
-                    else if (pack.qty === 2000) currentStepValue = 2000;
-                    else if (pack.qty === 5000) currentStepValue = 5000;
+                    const stepMap = {
+                        10: 10,
+                        50: 50,
+                        100: 100,
+                        200: 200,
+                        300: 300,
+                        500: 500,
+                        600: 600,
+                        700: 700,
+                        1000: 1000,
+                        2000: 2000,
+                        3000: 3000,
+                        5000: 5000
+                    };
+                    currentStepValue = stepMap[pack.qty] || 10;
                     updateUI();
                     document.getElementById('manualQty').value = pack.qty;
                 };
@@ -1523,16 +1542,11 @@
             const whatsappNumber = "916203240682";
             const msg = `Hello%2C%20I%20have%20completed%20payment%20for%20IMO%20recharge%0A%0A📌%20Order%20ID%3A%20${orderData.id}%0A👤%20IMO%20ID%3A%20${encodeURIComponent(orderData.imoId)}%0A💎%20Diamonds%3A%20${orderData.diamonds}%0A💰%20Amount%20Paid%3A%20₹${orderData.amount}%0A%0AUPI%20ID%3A%20${CURRENT_UPI_ID}%0A%0APlease%20verify%20and%20recharge%20manually.`;
 
-            // Create a hidden anchor element
             const link = document.createElement('a');
             link.href = `whatsapp://send?phone=${whatsappNumber}&text=${msg}`;
             link.style.display = 'none';
             document.body.appendChild(link);
-
-            // Programmatically click the link - Chrome treats this as user interaction
             link.click();
-
-            // Clean up - remove the element after a short delay
             setTimeout(() => {
                 document.body.removeChild(link);
             }, 100);
@@ -1548,7 +1562,6 @@
             orders.unshift(currentOrder);
             localStorage.setItem('imo_orders', JSON.stringify(orders));
 
-            // ========== SAVE PENDING ORDER TO FIREBASE ==========
             try {
                 await db.ref('payments/' + orderId).set({
                     orderId: orderId,
@@ -1562,7 +1575,6 @@
             } catch (firebaseError) {
                 console.error('[FIREBASE] Failed to save pending order:', firebaseError);
             }
-            // ========== END FIREBASE SAVE ==========
 
             const rechargeBtn = document.getElementById('rechargeBtn');
             rechargeBtn.disabled = true;
@@ -1581,7 +1593,6 @@
                     sessionStorage.setItem('pendingOrder', JSON.stringify(currentOrder));
                     startPollingOrderStatus(orderId, currentOrder);
 
-                    // ========== UPDATED: Open payment in Chrome if in WebView ==========
                     const paymentUrl = data.result.payment_url;
                     if (isInWebView()) {
                         openPaymentInChrome(paymentUrl);
@@ -1590,7 +1601,6 @@
                         window.open(paymentUrl, '_blank');
                         showToast("Payment page opened in new tab. Complete payment there.");
                     }
-                    // ========== END UPDATE ==========
 
                     rechargeBtn.disabled = false;
                     rechargeBtn.innerHTML = "🚀 Proceed to Pay";
@@ -1610,39 +1620,30 @@
         function showSuccessAndRedirectToWhatsApp(order) {
             stopPolling();
 
-            // ========== SAVE TO FIREBASE WITH STATUS "PAID" ==========
-            // This is the key fix - save order to Firebase when payment is successful
             const orderData = {
                 orderId: order.id,
                 imoId: order.imoId,
                 diamonds: order.diamonds,
                 amount: order.amount,
-                status: 'paid', // Critical: Mark as paid
+                status: 'paid',
                 timestamp: order.timestamp || Date.now(),
                 paidAt: Date.now()
             };
 
-            // Save to Firebase Realtime Database
             db.ref('payments/' + order.id).set(orderData)
                 .then(() => {
                     console.log('[FIREBASE] Order saved with status: paid', order.id);
                 })
                 .catch((error) => {
                     console.error('[FIREBASE] Error saving order:', error);
-                    // Try to update instead of set if error
                     db.ref('payments/' + order.id).update({
                         status: 'paid',
                         paidAt: Date.now()
                     });
                 });
-            // ========== END FIREBASE SAVE ==========
             const orderDetails = `<p><strong>Order ID:</strong> ${order.id}</p><p><strong>IMO ID:</strong> ${order.imoId}</p><p><strong>💎 Diamonds:</strong> ${order.diamonds}</p><p><strong>💰 Amount:</strong> ₹${order.amount}</p>`;
             document.getElementById('successOrderDetails').innerHTML = orderDetails;
             document.getElementById('successOverlay').classList.add('active');
-            // redirectToWhatsApp(order);
-            // setTimeout(() => {
-            //     document.getElementById('successOverlay').classList.remove('active');
-            // }, 2000);
         }
 
         function checkPaymentSuccess() {
@@ -1755,13 +1756,11 @@
             contentDiv.innerHTML = `<div class="history-loading">🔍 Searching purchases for IMO: ${imoId}...</div>`;
             resultsDiv.classList.add('show');
 
-            // Query Firebase for all payments with this IMO ID
             db.ref('payments').orderByChild('imoId').equalTo(imoId).once('value')
                 .then((snapshot) => {
                     const data = snapshot.val();
                     if (!data) {
-                        contentDiv.innerHTML =
-                            `<div class="history-empty">😕 No purchases found for IMO ID: ${imoId}</div>`;
+                        contentDiv.innerHTML = `<div class="history-empty">😕 No purchases found for IMO ID: ${imoId}</div>`;
                         return;
                     }
 
@@ -1780,12 +1779,10 @@
                     });
 
                     if (orders.length === 0) {
-                        contentDiv.innerHTML =
-                            `<div class="history-empty">😕 No successful purchases found for IMO ID: ${imoId}</div>`;
+                        contentDiv.innerHTML = `<div class="history-empty">😕 No successful purchases found for IMO ID: ${imoId}</div>`;
                         return;
                     }
 
-                    // Sort by timestamp (newest first)
                     orders.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
                     html += `
@@ -1795,7 +1792,7 @@
                         </div>
                     `;
 
-                    orders.forEach((order, index) => {
+                    orders.forEach((order) => {
                         const date = order.paidAt ? new Date(order.paidAt) : new Date(order.timestamp);
                         const dateStr = date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
                         const timeStr = date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
@@ -1843,7 +1840,6 @@
             updateProceedButtonState();
         }
 
-        // Search history event listeners
         document.getElementById('historySearchBtn').addEventListener('click', searchPurchaseHistory);
         document.getElementById('historySearchInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
@@ -1968,7 +1964,7 @@
                 const div = document.createElement('div');
                 div.className = 'setting-row';
                 div.style.marginBottom = '0.5rem';
-                const currentRate = perDiamondRates[qty] || (qty === 10 ? 3.0 : qty === 50 ? 1.79 : 1.76);
+                const currentRate = perDiamondRates[qty] || defaultRates[qty] || 1.76;
                 div.innerHTML = `<label style="min-width:100px;">${qty} Diamonds:</label>
                          <input type="number" id="rate_${qty}" value="${currentRate}" step="0.01" min="0.5" style="width:100px;">
                          <span>₹ per diamond → Pack price: ₹${Math.round(currentRate * qty)}</span>`;
@@ -1993,7 +1989,6 @@
         const savedUpi = localStorage.getItem('imo_upi_id');
         if (savedUpi) CURRENT_UPI_ID = savedUpi;
 
-        // Initialize Firebase data loading
         loadPricesAndTickerFromFirebase();
 
         function updateUpiId(newUpiId) {
@@ -2009,7 +2004,6 @@
             return true;
         }
 
-        // Admin panel handlers
         const adminModal = document.getElementById('adminModal');
         document.getElementById('adminToggleBtn').addEventListener('click', () => adminModal.classList.add('active'));
         document.getElementById('closeAdminModal').addEventListener('click', () => adminModal.classList.remove('active'));
@@ -2093,7 +2087,6 @@
         if (savedMaintenance !== null) settings.maintenanceMode = savedMaintenance === 'true';
         updateMaintenanceUI();
 
-        // Ticker rotation
         let tickerIdx = 0;
         setInterval(() => {
             const ticker = document.getElementById('tickerText');
@@ -2103,11 +2096,8 @@
             }
         }, 4000);
 
-
         buildGrid();
         updateUI();
-
-        // ========== MAINTENANCE MODE LISTENER ==========
     </script>
 </body>
 
