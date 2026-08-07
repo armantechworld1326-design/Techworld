@@ -25,16 +25,16 @@
             position: relative;
         }
 
-        .glass-card {
+        /* .glass-card {
             background: rgba(255, 255, 255, 0.78);
             backdrop-filter: blur(16px);
             border-radius: 2.2rem;
             border: 1px solid rgba(255, 255, 255, 0.9);
             box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.08);
-            max-width: 600px;
+            width: 100%;
             margin: 0 auto 1.5rem;
             padding: 1.8rem;
-        }
+        } */
 
         .hero h1 {
             font-size: 2rem;
@@ -78,10 +78,10 @@
             justify-content: center;
             margin: 0.4rem 0;
             /* Enclose all boxes in a rectangle */
-            border: 2px solid #d1d5db;
+            border: 2px solid #28b908;
             border-radius: 1.6rem;
             padding: 2px;
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(194, 201, 192, 0.1);
             backdrop-filter: blur(4px);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
         }
@@ -107,9 +107,10 @@
             padding: 0.9rem 0.3rem;
             text-align: center;
             cursor: pointer;
-            border: 2px solid transparent;
+            border: none;
             transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
+            /* ← CRITICAL for tick positioning */
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(123, 45, 142, 0.12);
         }
@@ -143,10 +144,8 @@
             transform: translateY(-4px) scale(1.03);
             box-shadow: 0 8px 30px rgba(123, 45, 142, 0.3);
             border-color: #7b2d8e;
-        }
-
-        .diamond-option.selected::before {
-            opacity: 1;
+            overflow: visible;
+            /* Allow tick to be fully visible */
         }
 
         .diamond-option:active {
@@ -230,49 +229,7 @@
             animation: diamondPop 0.4s ease;
         }
 
-        /* Shimmer effect on hover */
-        .diamond-option::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.3), transparent 60%);
-            opacity: 0;
-            transition: opacity 0.5s ease;
-            pointer-events: none;
-        }
 
-        .diamond-option:hover::after {
-            opacity: 1;
-        }
-
-        /* ===== TICK MARK FOR SELECTED PACK ===== */
-        .diamond-option.selected::after {
-            content: "✔";
-            position: absolute;
-            top: 4px;
-            right: 8px;
-            font-size: 18px;
-            color: #10b981;
-            font-weight: bold;
-            opacity: 1;
-            z-index: 10;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-        }
-
-        /* Ensure the shimmer effect doesn't cover the tick */
-        .diamond-option:hover::after {
-            opacity: 1;
-        }
 
         /* ===== SEARCH HISTORY SECTION ===== */
         .history-section {
@@ -496,6 +453,50 @@
             align-items: center;
             flex-wrap: wrap;
         }
+
+        @media (max-width: 768px) {
+            .vehicle-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .vehicle-grid {
+                grid-template-columns: 1fr 1fr;
+                /* or 1fr for single column if preferred */
+                gap: 0.5rem;
+            }
+        }
+
+        /* ==========================================================================
+   Registration Container - Full Width
+   ========================================================================== */
+        .registration-container {
+            max-width: 100%;
+            /* Remove the 900px limit */
+            margin: 0;
+            /* Remove auto centering margins */
+            padding: 1rem;
+            /* Reduce padding */
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--border-light);
+        }
+
+        /* ==========================================================================
+   Vehicle Grid - Expand to full width
+   ========================================================================== */
+        .vehicle-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            /* Reduce gap for tighter look */
+            margin: 1rem 0;
+            /* Keep top/bottom margin, remove side margins */
+        }
+
 
         .price-chip {
             background: #eef2ff;
@@ -871,6 +872,82 @@
                 gap: 10px;
                 padding: 12px;
             }
+        }
+
+        /* ===== GRADIENT BORDER + TICK ===== */
+        .diamond-option.selected {
+            overflow: visible;
+        }
+
+
+
+        /* ===== TICK ELEMENT INSIDE DIAMOND BOX ===== */
+        .diamond-option {
+            position: relative;
+            /* Required for tick positioning */
+            background: white;
+            border-radius: 1.4rem;
+            padding: 0.9rem 0.3rem;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(123, 45, 142, 0.12);
+        }
+
+        .diamond-option.selected {
+            background: linear-gradient(145deg, #f3e8ff, #e9d5ff);
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 8px 30px rgba(123, 45, 142, 0.3);
+            border-color: #7b2d8e;
+        }
+
+        /* Tick element inside the box */
+        .diamond-tick {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 14px;
+            color: #10b981;
+            background: #ffffff;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+            border: 2px solid #10b981;
+            font-weight: bold;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .diamond-option.selected .diamond-tick {
+            display: flex;
+        }
+
+        .diamond-option.selected::after {
+            content: "✔";
+            position: absolute;
+            top: 4px;
+            right: 8px;
+            left: auto;
+            /* ← add this line */
+            font-size: 18px;
+            color: #10b981;
+            font-weight: bold;
+            opacity: 1;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
         }
     </style>
 </head>
@@ -1508,7 +1585,8 @@
                 div.className = 'diamond-option';
                 if (currentQty === pack.qty) div.classList.add('selected');
                 div.dataset.qty = pack.qty;
-                div.innerHTML = `<div class="diamond-qty"><span class="diamond-icon">💎</span> ${pack.qty}</div><div class="diamond-price">₹${pack.price}</div>`;
+                div.innerHTML = `<div class="diamond-qty"><span class="diamond-icon">💎</span> ${pack.qty}</div>
+                <div class="diamond-price">₹${pack.price}</div>`;
                 div.onclick = () => {
                     if (settings.maintenanceMode) return;
                     currentQty = pack.qty;
